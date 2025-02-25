@@ -6,15 +6,31 @@ import { GameLayout } from "./GameLayout";
 import {
   GamePiece,
   BoardPosition,
-  AVAILABLE_PIECES,
   validateCaptureChain,
   calculateChainScore,
 } from "@/lib/game-logic";
 import { generateBoard } from "@/lib/board-generator";
+import { selectPieces } from "@/lib/piece-selector-service";
+import { LevelSelector } from "@/components/game/LevelSelector";
 
 export function Game() {
+  // Game difficulty state
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
+    "medium",
+  );
+
+  // Level selection for piece sets
+  const [currentLevelId, setCurrentLevelId] = useState<string | undefined>(
+    undefined,
+  );
+
+  // Board configuration state
+  const [boardConfig, setBoardConfig] = useState(generateBoard(difficulty));
+
+  // Available pieces based on level selection
+  const [availablePieces, setAvailablePieces] = useState<GamePiece[]>([]);
+
   // State declarations
-  const [boardConfig, setBoardConfig] = useState(generateBoard("medium"));
   const [pieces, setPieces] = useState<Map<string, GamePiece>>(new Map());
   const [selectedPiece, setSelectedPiece] = useState<
     | {
@@ -28,11 +44,30 @@ export function Game() {
   const [combo, setCombo] = useState(0);
   const [potentialPoints, setPotentialPoints] = useState(0);
   const [multiplierText, setMultiplierText] = useState("");
-  // New state to track if king can be captured
   const [canCaptureKing, setCanCaptureKing] = useState(false);
+
+  // Initialize available pieces when level or board changes
+  useEffect(() => {
+    // Select pieces based on current level ID or random
+    const selectedPieces = selectPieces(boardConfig, currentLevelId);
+    setAvailablePieces(selectedPieces);
+  }, [boardConfig, currentLevelId]);
 
   // Get list of used piece IDs for tracking available pieces
   const usedPieceIds = Array.from(pieces.values()).map((piece) => piece.id);
+
+  // Handle level change
+  const handleLevelChange = (levelId?: string) => {
+    setCurrentLevelId(levelId);
+  };
+
+  // Handle difficulty change
+  const handleDifficultyChange = (
+    newDifficulty: "easy" | "medium" | "hard",
+  ) => {
+    setDifficulty(newDifficulty);
+    resetBoard(newDifficulty);
+  };
 
   // Handle piece drop on board
   const handlePieceDrop = (piece: GamePiece, position: BoardPosition) => {
@@ -93,19 +128,29 @@ export function Game() {
   };
 
   // Reset the board
-  const resetBoard = () => {
+  const resetBoard = (newDifficulty?: "easy" | "medium" | "hard") => {
     setPieces(new Map());
     setCaptureChain([]);
     setSelectedPiece(undefined);
     setPotentialPoints(0);
     setMultiplierText("");
     setCanCaptureKing(false);
-    setBoardConfig(generateBoard("medium"));
+    setBoardConfig(generateBoard(newDifficulty || difficulty));
   };
 
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="p-4">
+        {/* Add LevelSelector component */}
+        <div className="mb-4 max-w-6xl mx-auto">
+          <LevelSelector
+            currentLevelId={currentLevelId}
+            currentDifficulty={difficulty}
+            onLevelChange={handleLevelChange}
+            onDifficultyChange={handleDifficultyChange}
+          />
+        </div>
+
         <GameLayout
           pieces={pieces}
           blackKingPosition={boardConfig.blackKingPosition}
@@ -118,16 +163,16 @@ export function Game() {
           score={score}
           combo={combo}
           usedPieces={usedPieceIds}
-          availablePieces={AVAILABLE_PIECES}
+          availablePieces={availablePieces}
           potentialPoints={potentialPoints}
           multiplierText={multiplierText}
           canCaptureKing={canCaptureKing}
         />
 
-        {/* Add any additional game controls here */}
+        {/* Game controls */}
         <div className="mt-4 flex justify-center">
           <button
-            onClick={resetBoard}
+            onClick={() => resetBoard()}
             className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
           >
             Reset Board

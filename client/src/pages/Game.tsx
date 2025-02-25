@@ -1,113 +1,73 @@
-// Example of how to integrate the piece selection into a Game component
 import { useState, useEffect } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { Board } from "@/components/game/Board";
-import { Sidebar } from "@/components/game/Sidebar";
-import { generateBoard } from "@/lib/board-generator";
-import { selectRandomPieces } from "@/lib/piece-selector";
+import { GameLayout } from "./GameLayout";
 import {
   GamePiece,
   BoardPosition,
-  calculateChainScore,
+  AVAILABLE_PIECES,
   validateCaptureChain,
+  calculateChainScore,
 } from "@/lib/game-logic";
+import { generateBoard } from "@/lib/board-generator";
 
 export function Game() {
-  // Game state
+  // State declarations
   const [boardConfig, setBoardConfig] = useState(generateBoard("medium"));
-  const [availablePieces, setAvailablePieces] = useState<GamePiece[]>([]);
   const [pieces, setPieces] = useState<Map<string, GamePiece>>(new Map());
+  const [selectedPiece, setSelectedPiece] = useState<{
+    piece: GamePiece;
+    position: BoardPosition;
+  } | undefined>(undefined);
   const [captureChain, setCaptureChain] = useState<BoardPosition[]>([]);
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
-  const [usedPieces, setUsedPieces] = useState<string[]>([]);
-  const [selectedPiece, setSelectedPiece] = useState<
-    { piece: GamePiece; position: BoardPosition } | undefined
-  >();
   const [potentialPoints, setPotentialPoints] = useState(0);
   const [multiplierText, setMultiplierText] = useState("");
 
-  // Initialize game with a new board and random pieces
-  useEffect(() => {
-    const newBoard = generateBoard("medium");
-    setBoardConfig(newBoard);
+  // Get list of used piece IDs for tracking available pieces
+  const usedPieceIds = Array.from(pieces.values()).map((piece) => piece.id);
 
-    // Select random pieces for this puzzle
-    const randomPieces = selectRandomPieces(newBoard);
-    setAvailablePieces(randomPieces);
-
-    // Reset game state
-    setPieces(new Map());
-    setCaptureChain([]);
-    setScore(0);
-    setCombo(0);
-    setUsedPieces([]);
-    setSelectedPiece(undefined);
-    setPotentialPoints(0);
-    setMultiplierText("");
-  }, []);
-
-  // Handler for dropping a piece on the board
+  // Handle piece drop on board
   const handlePieceDrop = (piece: GamePiece, position: BoardPosition) => {
-    // Check if this piece is already used
-    if (usedPieces.includes(piece.id)) {
-      return;
-    }
-
-    // Clone the current pieces map
     const newPieces = new Map(pieces);
-    const posKey = `${position.x},${position.y}`;
-
-    // If there's already a piece at this position, return
-    if (newPieces.has(posKey)) {
-      return;
-    }
-
-    // Add the piece to the board
-    newPieces.set(posKey, piece);
+    const key = `${position.x},${position.y}`;
+    newPieces.set(key, piece);
     setPieces(newPieces);
 
-    // Update the used pieces
-    setUsedPieces([...usedPieces, piece.id]);
-
-    // Update the capture chain
+    // Update capture chain
     const newCaptureChain = [...captureChain, position];
     setCaptureChain(newCaptureChain);
 
-    // Check if this piece can capture the king
-    const canCaptureKing = validateCaptureChain(
-      newPieces,
-      newCaptureChain,
-      boardConfig.blackKingPosition,
-    );
-
-    // Calculate score for the current chain
+    // Calculate potential points for this chain
     const { points, multiplierText } = calculateChainScore(
       newPieces,
-      newCaptureChain,
+      newCaptureChain
     );
+    setPotentialPoints(points);
+    setMultiplierText(multiplierText);
 
-    if (canCaptureKing) {
-      // Chain is complete! Update score and reset
-      setScore(score + points);
-      setCombo(combo + 1);
-      setPotentialPoints(0);
-      setMultiplierText("");
+    // Check if we've captured the king
+    if (
+      validateCaptureChain(
+        newPieces,
+        [...newCaptureChain, boardConfig.blackKingPosition],
+        boardConfig.blackKingPosition
+      )
+    ) {
+      // Successful capture!
+      setScore((prevScore) => prevScore + points);
+      setCombo((prevCombo) => prevCombo + 1);
 
-      // Show a success message or animation
-      // ...
-    } else {
-      // Just update potential points
-      setPotentialPoints(points);
-      setMultiplierText(multiplierText);
+      // Reset board for next round
+      resetBoard();
     }
   };
 
-  // Handler for clicking a square on the board
+  // Handle square click for selecting pieces
   const handleSquareClick = (position: BoardPosition) => {
-    const posKey = `${position.x},${position.y}`;
-    const piece = pieces.get(posKey);
+    const key = `${position.x},${position.y}`;
+    const piece = pieces.get(key);
 
     if (piece) {
       setSelectedPiece({ piece, position });
@@ -116,57 +76,45 @@ export function Game() {
     }
   };
 
-  // Generate new board
-  const handleNewGame = () => {
-    const newBoard = generateBoard("medium");
-    setBoardConfig(newBoard);
-
-    // Select random pieces for this puzzle
-    const randomPieces = selectRandomPieces(newBoard);
-    setAvailablePieces(randomPieces);
-
-    // Reset game state
+  // Reset the board
+  const resetBoard = () => {
     setPieces(new Map());
     setCaptureChain([]);
-    setScore(0);
-    setCombo(0);
-    setUsedPieces([]);
     setSelectedPiece(undefined);
     setPotentialPoints(0);
     setMultiplierText("");
+    setBoardConfig(generateBoard("medium"));
   };
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex gap-4 p-4">
-        <div>
-          <Board
-            pieces={pieces}
-            blackKingPosition={boardConfig.blackKingPosition}
-            missingSquares={boardConfig.missingSquares}
-            startingSquare={boardConfig.startingSquare}
-            onPieceDrop={handlePieceDrop}
-            selectedPiece={selectedPiece}
-            onSquareClick={handleSquareClick}
-            captureChain={captureChain}
-          />
-          <div className="mt-4 flex justify-between">
-            <button
-              className="px-4 py-2 bg-blue-500 text-white rounded"
-              onClick={handleNewGame}
-            >
-              New Game
-            </button>
-          </div>
-        </div>
-        <Sidebar
+      <div className="p-4">
+        <GameLayout
+          pieces={pieces}
+          blackKingPosition={boardConfig.blackKingPosition}
+          missingSquares={boardConfig.missingSquares}
+          startingSquare={boardConfig.startingSquare}
+          onPieceDrop={handlePieceDrop}
+          selectedPiece={selectedPiece}
+          onSquareClick={handleSquareClick}
+          captureChain={captureChain}
           score={score}
           combo={combo}
-          usedPieces={usedPieces}
-          availablePieces={availablePieces}
+          usedPieces={usedPieceIds}
+          availablePieces={AVAILABLE_PIECES}
           potentialPoints={potentialPoints}
           multiplierText={multiplierText}
         />
+
+        {/* Add any additional game controls here */}
+        <div className="mt-4 flex justify-center">
+          <button 
+            onClick={resetBoard}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Reset Board
+          </button>
+        </div>
       </div>
     </DndProvider>
   );

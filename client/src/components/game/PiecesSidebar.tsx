@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Piece } from "./Piece";
 import { GamePiece } from "@/lib/game-logic";
@@ -11,6 +12,7 @@ export function PiecesSidebar({ usedPieces, availablePieces }: SidebarProps) {
   // Group available pieces by type for organized display
   const piecesByType: Record<string, GamePiece[]> = {};
 
+  // Only display the pieces that were selected for this game
   availablePieces.forEach((piece) => {
     if (!piecesByType[piece.type]) {
       piecesByType[piece.type] = [];
@@ -24,12 +26,9 @@ export function PiecesSidebar({ usedPieces, availablePieces }: SidebarProps) {
         <CardTitle>Available Pieces</CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Display pieces by type in a more compact layout */}
         {Object.entries(piecesByType).map(([pieceType, pieces]) => (
-          <div key={pieceType} className="mb-3">
-            <h3 className="text-sm font-medium capitalize mb-1">
-              {pieceType}s
-            </h3>
+          <div key={pieceType} className="mb-3 last:mb-0">
+            <h3 className="text-sm font-medium capitalize mb-1">{pieceType}s</h3>
             <div className="grid grid-cols-2 gap-2">
               {pieces.map((piece) => {
                 const isUsed = usedPieces.includes(piece.id);

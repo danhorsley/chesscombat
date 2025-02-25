@@ -1,6 +1,6 @@
-// game-logic.ts - Core game mechanics
+// game-logic.ts - Core game mechanics with updated point system
 
-export type PieceType = "rook" | "bishop" | "knight" | "queen" | "king";
+export type PieceType = "rook" | "bishop" | "knight" | "queen";
 export type PieceColor = "blue" | "green" | "purple" | "red" | "black";
 
 export interface GamePiece {
@@ -74,17 +74,6 @@ export const getPieceMovements = (
       const bishopMoves = getPieceMovements({ ...piece, type: "bishop" }, from);
       moves.push(...rookMoves, ...bishopMoves);
       break;
-
-    case "king":
-      // One square in any direction
-      for (let dx = -1; dx <= 1; dx++) {
-        for (let dy = -1; dy <= 1; dy++) {
-          if (dx === 0 && dy === 0) continue;
-          const newPos = { x: from.x + dx, y: from.y + dy };
-          if (isWithinBoard(newPos)) moves.push(newPos);
-        }
-      }
-      break;
   }
 
   return moves;
@@ -123,7 +112,7 @@ export const validateCaptureChain = (
       i === positions.length - 1
         ? {
             id: "black-king",
-            type: "king",
+            type: "king" as any, // Using 'as any' since king is not in PieceType anymore
             color: "black",
             points: 0,
             multiplier: 1,
@@ -146,125 +135,101 @@ export const validateCaptureChain = (
 };
 
 export const AVAILABLE_PIECES: GamePiece[] = [
-  // Rooks
-  { id: "rook-blue", type: "rook", color: "blue", points: 50, multiplier: 1.2 },
-  {
-    id: "rook-green",
-    type: "rook",
-    color: "green",
-    points: 45,
-    multiplier: 1.3,
-  },
+  // Rooks - 5x multiplier
+  { id: "rook-blue", type: "rook", color: "blue", points: 25, multiplier: 5 },
+  { id: "rook-green", type: "rook", color: "green", points: 50, multiplier: 5 },
   {
     id: "rook-purple",
     type: "rook",
     color: "purple",
-    points: 55,
-    multiplier: 1.1,
+    points: 75,
+    multiplier: 5,
   },
-  { id: "rook-red", type: "rook", color: "red", points: 60, multiplier: 1.0 },
+  { id: "rook-red", type: "rook", color: "red", points: 100, multiplier: 5 },
 
-  // Bishops
+  // Bishops - 2x multiplier
   {
     id: "bishop-blue",
     type: "bishop",
     color: "blue",
-    points: 35,
-    multiplier: 1.4,
+    points: 25,
+    multiplier: 2,
   },
   {
     id: "bishop-green",
     type: "bishop",
     color: "green",
-    points: 30,
-    multiplier: 1.5,
+    points: 50,
+    multiplier: 2,
   },
   {
     id: "bishop-purple",
     type: "bishop",
     color: "purple",
-    points: 40,
-    multiplier: 1.3,
+    points: 75,
+    multiplier: 2,
   },
   {
     id: "bishop-red",
     type: "bishop",
     color: "red",
-    points: 45,
-    multiplier: 1.2,
+    points: 100,
+    multiplier: 2,
   },
 
-  // Knights
+  // Knights - 2x multiplier
   {
     id: "knight-blue",
     type: "knight",
     color: "blue",
-    points: 40,
-    multiplier: 1.3,
+    points: 25,
+    multiplier: 2,
   },
   {
     id: "knight-green",
     type: "knight",
     color: "green",
-    points: 35,
-    multiplier: 1.4,
+    points: 50,
+    multiplier: 2,
   },
   {
     id: "knight-purple",
     type: "knight",
     color: "purple",
-    points: 45,
-    multiplier: 1.2,
+    points: 75,
+    multiplier: 2,
   },
   {
     id: "knight-red",
     type: "knight",
     color: "red",
-    points: 50,
-    multiplier: 1.1,
+    points: 100,
+    multiplier: 2,
   },
 
-  // Queens
+  // Queens - 10x multiplier
   {
     id: "queen-blue",
     type: "queen",
     color: "blue",
-    points: 80,
-    multiplier: 1.5,
+    points: 25,
+    multiplier: 10,
   },
   {
     id: "queen-green",
     type: "queen",
     color: "green",
-    points: 75,
-    multiplier: 1.7,
+    points: 50,
+    multiplier: 10,
   },
   {
     id: "queen-purple",
     type: "queen",
     color: "purple",
-    points: 85,
-    multiplier: 1.4,
+    points: 75,
+    multiplier: 10,
   },
-  { id: "queen-red", type: "queen", color: "red", points: 90, multiplier: 2.0 },
-
-  // Kings (have lower points but higher multipliers)
-  { id: "king-blue", type: "king", color: "blue", points: 20, multiplier: 2.0 },
-  {
-    id: "king-green",
-    type: "king",
-    color: "green",
-    points: 15,
-    multiplier: 2.5,
-  },
-  {
-    id: "king-purple",
-    type: "king",
-    color: "purple",
-    points: 25,
-    multiplier: 1.8,
-  },
-  { id: "king-red", type: "king", color: "red", points: 30, multiplier: 1.5 },
+  { id: "queen-red", type: "queen", color: "red", points: 100, multiplier: 10 },
 ];
 
 export const calculateChainScore = (

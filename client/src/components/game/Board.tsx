@@ -1,7 +1,7 @@
 import { useDrop } from 'react-dnd';
 import { cn } from "@/lib/utils";
 import { Piece } from './Piece';
-import { BOARD_SIZE, type GamePiece, type BoardPosition, getPieceMovements } from '@/lib/game-logic';
+import { BOARD_SIZE, type GamePiece, type BoardPosition, getPieceMovements, canCapture } from '@/lib/game-logic';
 
 interface BoardProps {
   pieces: Map<string, GamePiece>;
@@ -58,6 +58,15 @@ export function Board({
         // If no pieces on board, can only drop on starting square
         if (pieces.size === 0) return isStarting;
 
+        // If there's a capture chain, only allow drops where the last piece can capture
+        if (captureChain.length > 0) {
+          const lastPos = captureChain[captureChain.length - 1];
+          const lastPiece = pieces.get(`${lastPos.x},${lastPos.y}`);
+          if (lastPiece) {
+            return canCapture(lastPiece, lastPos, position);
+          }
+        }
+
         // Otherwise can drop anywhere valid
         return true;
       },
@@ -65,7 +74,17 @@ export function Board({
       collect: monitor => ({
         isOver: monitor.isOver(),
       }),
-    }), [pieces.size, isMissing, isBlackKing, isStarting]);
+    }), [pieces.size, isMissing, isBlackKing, isStarting, captureChain]);
+
+    // Determine if this square is a valid drop target for the current drag
+    let isValidDropTarget = false;
+    if (captureChain.length > 0) {
+      const lastPos = captureChain[captureChain.length - 1];
+      const lastPiece = pieces.get(`${lastPos.x},${lastPos.y}`);
+      if (lastPiece) {
+        isValidDropTarget = canCapture(lastPiece, lastPos, position);
+      }
+    }
 
     return (
       <div
@@ -82,7 +101,8 @@ export function Board({
           "flex items-center justify-center",
           "border border-gray-300",
           isStarting && "outline outline-2 outline-offset-[-2px] outline-red-500",
-          chainIndex !== -1 && "outline outline-2 outline-offset-[-2px] outline-green-500"
+          chainIndex !== -1 && "outline outline-2 outline-offset-[-2px] outline-green-500",
+          captureChain.length > 0 && isValidDropTarget && "bg-yellow-100"
         )}
       >
         {isBlackKing && (

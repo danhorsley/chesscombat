@@ -135,3 +135,4 @@ export const AVAILABLE_PIECES: GamePiece[] = [
   { id: 'knight-purple', type: 'knight', color: 'purple', points: 40, multiplier: 1.3 },
   { id: 'queen-red', type: 'queen', color: 'red', points: 90, multiplier: 2.0 },
 ];
+

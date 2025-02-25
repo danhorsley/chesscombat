@@ -121,8 +121,12 @@ export default function Game() {
     setCombo(0);
   }, [pieces, captureChain, combo, blackKingPosition, toast]);
 
-  // Get list of pieces currently on the board
-  const usedPieces = Array.from(pieces.values()).map(piece => piece.id.split(',')[0]);
+  // Update the base piece tracking logic
+  const usedPieces = Array.from(pieces.values()).map(piece => {
+    // Extract the base piece ID (e.g., 'rook-blue' from 'rook-blue-0,1')
+    const baseId = piece.id.split(',')[0];
+    return baseId;
+  });
 
   return (
     <DndProvider backend={HTML5Backend}>

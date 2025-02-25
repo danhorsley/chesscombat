@@ -51,12 +51,21 @@ export function Board({
 
     const [{ isOver }, drop] = useDrop(() => ({
       accept: 'PIECE',
-      canDrop: () => !isMissing,
+      canDrop: () => {
+        // Can't drop on missing square or black king
+        if (isMissing || isBlackKing) return false;
+
+        // If no pieces on board, can only drop on starting square
+        if (pieces.size === 0) return isStarting;
+
+        // Otherwise can drop anywhere valid
+        return true;
+      },
       drop: (item: GamePiece) => onPieceDrop(item, position),
       collect: monitor => ({
         isOver: monitor.isOver(),
       }),
-    }));
+    }), [pieces.size, isMissing, isBlackKing, isStarting]);
 
     return (
       <div
@@ -64,7 +73,8 @@ export function Board({
         ref={drop}
         onClick={() => onSquareClick(position)}
         className={cn(
-          "w-16 h-16 relative",
+          "w-16 h-16",
+          "relative",
           (position.x + position.y) % 2 === 0 ? "bg-white" : "bg-gray-100",
           isOver && "bg-blue-100",
           isValidMove && "bg-green-100",

@@ -24,9 +24,15 @@ export default function Game() {
   const missingSquare: BoardPosition = { x: 4, y: 4 };
 
   const handlePieceDrop = useCallback((piece: GamePiece, position: BoardPosition) => {
-    const key = `${position.x},${position.y}`;
+    // Don't allow placing on missing square or black king position
+    if (
+      (position.x === missingSquare.x && position.y === missingSquare.y) ||
+      (position.x === blackKingPosition.x && position.y === blackKingPosition.y)
+    ) {
+      return;
+    }
 
-    // If no pieces are on the board, first piece must go on starting square
+    // If this is the first piece being placed
     if (pieces.size === 0) {
       if (position.x !== startingSquare.x || position.y !== startingSquare.y) {
         toast({
@@ -38,17 +44,17 @@ export default function Game() {
       }
     }
 
-    // For all pieces (including first), set the piece in the new position
+    // Update pieces map with new piece
     setPieces(prev => {
       const next = new Map(prev);
-      next.set(key, { ...piece, id: key });
+      next.set(`${position.x},${position.y}`, { ...piece, id: `${position.x},${position.y}` });
       return next;
     });
 
     // Reset chain when adding/moving pieces
     setCaptureChain([]);
     setCombo(0);
-  }, [pieces, startingSquare, toast]);
+  }, [pieces, startingSquare, blackKingPosition, missingSquare, toast]);
 
   const handleSquareClick = useCallback((position: BoardPosition) => {
     const key = `${position.x},${position.y}`;
@@ -115,6 +121,9 @@ export default function Game() {
     setCombo(0);
   }, [pieces, captureChain, combo, blackKingPosition, toast]);
 
+  // Get list of pieces currently on the board
+  const usedPieces = Array.from(pieces.values()).map(piece => piece.id.split(',')[0]);
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="min-h-screen bg-gray-100 p-8">
@@ -144,7 +153,7 @@ export default function Game() {
               </Button>
             </div>
 
-            <Sidebar score={score} combo={combo} />
+            <Sidebar score={score} combo={combo} usedPieces={usedPieces} />
           </div>
         </div>
       </div>

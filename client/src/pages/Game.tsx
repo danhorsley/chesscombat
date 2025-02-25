@@ -1,3 +1,4 @@
+// Updated Game.tsx
 import { useState, useEffect } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -15,15 +16,20 @@ export function Game() {
   // State declarations
   const [boardConfig, setBoardConfig] = useState(generateBoard("medium"));
   const [pieces, setPieces] = useState<Map<string, GamePiece>>(new Map());
-  const [selectedPiece, setSelectedPiece] = useState<{
-    piece: GamePiece;
-    position: BoardPosition;
-  } | undefined>(undefined);
+  const [selectedPiece, setSelectedPiece] = useState<
+    | {
+        piece: GamePiece;
+        position: BoardPosition;
+      }
+    | undefined
+  >(undefined);
   const [captureChain, setCaptureChain] = useState<BoardPosition[]>([]);
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [potentialPoints, setPotentialPoints] = useState(0);
   const [multiplierText, setMultiplierText] = useState("");
+  // New state to track if king can be captured
+  const [canCaptureKing, setCanCaptureKing] = useState(false);
 
   // Get list of used piece IDs for tracking available pieces
   const usedPieceIds = Array.from(pieces.values()).map((piece) => piece.id);
@@ -42,30 +48,40 @@ export function Game() {
     // Calculate potential points for this chain
     const { points, multiplierText } = calculateChainScore(
       newPieces,
-      newCaptureChain
+      newCaptureChain,
     );
     setPotentialPoints(points);
     setMultiplierText(multiplierText);
 
-    // Check if we've captured the king
+    // Check if we can capture the king
+    const kingCanBeCaptured = validateCaptureChain(
+      newPieces,
+      newCaptureChain,
+      boardConfig.blackKingPosition,
+    );
+
+    // Set the state to indicate if king can be captured
+    setCanCaptureKing(kingCanBeCaptured);
+  };
+
+  // Handle square click for selecting pieces or capturing king
+  const handleSquareClick = (position: BoardPosition) => {
+    // Check if this is the king's position and if the king can be captured
     if (
-      validateCaptureChain(
-        newPieces,
-        [...newCaptureChain, boardConfig.blackKingPosition],
-        boardConfig.blackKingPosition
-      )
+      canCaptureKing &&
+      position.x === boardConfig.blackKingPosition.x &&
+      position.y === boardConfig.blackKingPosition.y
     ) {
-      // Successful capture!
-      setScore((prevScore) => prevScore + points);
+      // Complete the capture!
+      setScore((prevScore) => prevScore + potentialPoints);
       setCombo((prevCombo) => prevCombo + 1);
 
       // Reset board for next round
       resetBoard();
+      return;
     }
-  };
 
-  // Handle square click for selecting pieces
-  const handleSquareClick = (position: BoardPosition) => {
+    // Normal piece selection logic
     const key = `${position.x},${position.y}`;
     const piece = pieces.get(key);
 
@@ -83,6 +99,7 @@ export function Game() {
     setSelectedPiece(undefined);
     setPotentialPoints(0);
     setMultiplierText("");
+    setCanCaptureKing(false);
     setBoardConfig(generateBoard("medium"));
   };
 
@@ -104,11 +121,12 @@ export function Game() {
           availablePieces={AVAILABLE_PIECES}
           potentialPoints={potentialPoints}
           multiplierText={multiplierText}
+          canCaptureKing={canCaptureKing}
         />
 
         {/* Add any additional game controls here */}
         <div className="mt-4 flex justify-center">
-          <button 
+          <button
             onClick={resetBoard}
             className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
           >

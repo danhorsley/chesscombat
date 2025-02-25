@@ -18,6 +18,7 @@ interface GameLayoutProps {
   availablePieces: GamePiece[];
   potentialPoints?: number;
   multiplierText?: string;
+  canCaptureKing?: boolean;
 }
 
 export function GameLayout({
@@ -35,6 +36,7 @@ export function GameLayout({
   availablePieces,
   potentialPoints = 0,
   multiplierText = "",
+  canCaptureKing = false,
 }: GameLayoutProps) {
   return (
     <div className="flex flex-col gap-4 max-w-6xl mx-auto">
@@ -50,6 +52,7 @@ export function GameLayout({
             selectedPiece={selectedPiece}
             onSquareClick={onSquareClick}
             captureChain={captureChain}
+            canCaptureKing={canCaptureKing}
           />
         </div>
 
@@ -69,6 +72,7 @@ export function GameLayout({
           combo={combo}
           potentialPoints={potentialPoints}
           multiplierText={multiplierText}
+          canCaptureKing={canCaptureKing}
         />
       </div>
     </div>

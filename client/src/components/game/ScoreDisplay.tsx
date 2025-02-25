@@ -6,6 +6,7 @@ interface ScoreDisplayProps {
   combo: number;
   potentialPoints?: number;
   multiplierText?: string;
+  canCaptureKing?: boolean;
 }
 
 export function ScoreDisplay({
@@ -13,6 +14,7 @@ export function ScoreDisplay({
   combo,
   potentialPoints = 0,
   multiplierText = "",
+  canCaptureKing = false,
 }: ScoreDisplayProps) {
   return (
     <Card className="w-full">
@@ -28,6 +30,13 @@ export function ScoreDisplay({
         >
           {combo > 1 ? `${combo}x Combo!` : "No Combo"}
         </div>
+
+        {/* Capture King message */}
+        {canCaptureKing && (
+          <div className="px-3 py-1 bg-yellow-400 text-black font-bold rounded-md animate-pulse">
+            Click the king to capture!
+          </div>
+        )}
 
         {/* Potential Points */}
         {potentialPoints > 0 && (

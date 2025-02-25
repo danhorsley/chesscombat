@@ -18,6 +18,7 @@ interface BoardProps {
   selectedPiece?: { piece: GamePiece; position: BoardPosition };
   onSquareClick: (position: BoardPosition) => void;
   captureChain: BoardPosition[];
+  canCaptureKing?: boolean;
 }
 
 export function Board({
@@ -29,6 +30,7 @@ export function Board({
   selectedPiece,
   onSquareClick,
   captureChain,
+  canCaptureKing = false,
 }: BoardProps) {
   const validMoves = selectedPiece
     ? getPieceMovements(selectedPiece.piece, selectedPiece.position)
@@ -69,6 +71,9 @@ export function Board({
         isValidDropTarget = canCapture(lastPiece, lastPos, position);
       }
     }
+
+    // Check if this is the king and it can be captured
+    const isCapturableKing = isBlackKing && canCaptureKing;
 
     const [{ isOver }, drop] = useDrop(
       () => ({
@@ -118,19 +123,31 @@ export function Board({
           chainIndex !== -1 &&
             "outline outline-2 outline-offset-[-2px] outline-green-500",
           isValidDropTarget && "bg-yellow-100",
+          // Highlight king in gold when capturable
+          isCapturableKing && "bg-yellow-400 cursor-pointer animate-pulse",
         )}
       >
         {isBlackKing && (
-          <Piece
-            piece={{
-              id: "black-king",
-              type: "king",
-              color: "black",
-              points: 0,
-              multiplier: 1,
-            }}
-            draggable={false}
-          />
+          <div
+            className={cn(
+              "relative",
+              isCapturableKing && "scale-110 transition-transform",
+            )}
+          >
+            <Piece
+              piece={{
+                id: "black-king",
+                type: "king",
+                color: "black",
+                points: 0,
+                multiplier: 1,
+              }}
+              draggable={false}
+            />
+            {isCapturableKing && (
+              <div className="absolute inset-0 rounded-full border-2 border-yellow-500 animate-ping" />
+            )}
+          </div>
         )}
         {piece && (
           <div className={cn(chainIndex !== -1 && "relative")}>

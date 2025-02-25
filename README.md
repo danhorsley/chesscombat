@@ -5,6 +5,26 @@ This is a chess-inspired puzzle game where players create capture chains with ch
 
 ## Game Mechanics
 
+### Piece Scoring System
+- **Color-Based Points**:
+  - Blue pieces: 25 points
+  - Green pieces: 50 points
+  - Purple pieces: 75 points
+  - Red pieces: 100 points
+
+- **Piece-Type Multipliers**:
+  - Knight: 2x multiplier
+  - Bishop: 2x multiplier
+  - Rook: 5x multiplier
+  - Queen: 10x multiplier
+
+- **Chain Scoring**:
+  - The first piece contributes its base points
+  - Each subsequent piece contributes: (base points × accumulated multiplier)
+  - After a piece is counted, its multiplier is applied to all subsequent pieces
+  - Example: Blue Knight (25 pts) → Red Rook (100 pts × 2 = 200 pts) → Purple Queen (75 pts × 10 = 750 pts)
+  - Total: 975 points
+
 ### Core Gameplay
 - Players place chess pieces (rooks, bishops, knights, queens, kings) on a 5x5 board
 - Each piece has a point value and a multiplier
@@ -40,7 +60,7 @@ This is a chess-inspired puzzle game where players create capture chains with ch
 - `src/lib/`: Core game logic, board generation, scoring, and save functionality
 
 ## Known Issues
-
+- Board generation occasionally fails with `undefined is not an object (evaluating 'startingSquare.x')` error (~50% of the time)
 - [Add other known issues here]
 
 ## Roadmap

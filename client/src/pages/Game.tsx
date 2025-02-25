@@ -44,12 +44,33 @@ export default function Game() {
       }
     }
 
-    // Update pieces map with new piece
-    setPieces(prev => {
-      const next = new Map(prev);
-      next.set(`${position.x},${position.y}`, { ...piece, id: `${position.x},${position.y}` });
-      return next;
-    });
+    // Check if this piece is already on the board
+    const isAlreadyPlaced = Array.from(pieces.values()).some(
+      placedPiece => placedPiece.id === piece.id
+    );
+
+    if (isAlreadyPlaced) {
+      // Allow moving the same piece to a new position
+      setPieces(prev => {
+        const next = new Map(prev);
+        // Remove the piece from its old position
+        Array.from(next.entries()).forEach(([key, p]) => {
+          if (p.id === piece.id) {
+            next.delete(key);
+          }
+        });
+        // Add it to the new position
+        next.set(`${position.x},${position.y}`, piece);
+        return next;
+      });
+    } else {
+      // Place a new piece
+      setPieces(prev => {
+        const next = new Map(prev);
+        next.set(`${position.x},${position.y}`, piece);
+        return next;
+      });
+    }
 
     // Reset chain when adding/moving pieces
     setCaptureChain([]);
@@ -122,11 +143,7 @@ export default function Game() {
   }, [pieces, captureChain, combo, blackKingPosition, toast]);
 
   // Update the base piece tracking logic
-  const usedPieces = Array.from(pieces.values()).map(piece => {
-    // Extract the base piece ID (e.g., 'rook-blue' from 'rook-blue-0,1')
-    const baseId = piece.id.split(',')[0];
-    return baseId;
-  });
+  const usedPieces = Array.from(pieces.values()).map(piece => piece.id);
 
   return (
     <DndProvider backend={HTML5Backend}>

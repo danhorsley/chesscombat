@@ -1,5 +1,5 @@
-export type PieceType = 'rook' | 'bishop' | 'knight' | 'queen' | 'king';
-export type PieceColor = 'blue' | 'green' | 'purple' | 'red' | 'black';
+export type PieceType = "rook" | "bishop" | "knight" | "queen" | "king";
+export type PieceColor = "blue" | "green" | "purple" | "red" | "black";
 
 export interface GamePiece {
   id: string;
@@ -20,11 +20,14 @@ export const isWithinBoard = (pos: BoardPosition) => {
   return pos.x >= 0 && pos.x < BOARD_SIZE && pos.y >= 0 && pos.y < BOARD_SIZE;
 };
 
-export const getPieceMovements = (piece: GamePiece, from: BoardPosition): BoardPosition[] => {
+export const getPieceMovements = (
+  piece: GamePiece,
+  from: BoardPosition,
+): BoardPosition[] => {
   const moves: BoardPosition[] = [];
 
   switch (piece.type) {
-    case 'rook':
+    case "rook":
       // Horizontal and vertical moves
       for (let i = 0; i < BOARD_SIZE; i++) {
         if (i !== from.x) moves.push({ x: i, y: from.y });
@@ -32,7 +35,7 @@ export const getPieceMovements = (piece: GamePiece, from: BoardPosition): BoardP
       }
       break;
 
-    case 'bishop':
+    case "bishop":
       // Diagonal moves
       for (let i = -BOARD_SIZE; i <= BOARD_SIZE; i++) {
         const pos1 = { x: from.x + i, y: from.y + i };
@@ -42,31 +45,35 @@ export const getPieceMovements = (piece: GamePiece, from: BoardPosition): BoardP
       }
       break;
 
-    case 'knight':
+    case "knight":
       // L-shaped moves
       const knightMoves = [
-        { x: 2, y: 1 }, { x: 2, y: -1 },
-        { x: -2, y: 1 }, { x: -2, y: -1 },
-        { x: 1, y: 2 }, { x: 1, y: -2 },
-        { x: -1, y: 2 }, { x: -1, y: -2 }
+        { x: 2, y: 1 },
+        { x: 2, y: -1 },
+        { x: -2, y: 1 },
+        { x: -2, y: -1 },
+        { x: 1, y: 2 },
+        { x: 1, y: -2 },
+        { x: -1, y: 2 },
+        { x: -1, y: -2 },
       ];
       for (const move of knightMoves) {
         const newPos = {
           x: from.x + move.x,
-          y: from.y + move.y
+          y: from.y + move.y,
         };
         if (isWithinBoard(newPos)) moves.push(newPos);
       }
       break;
 
-    case 'queen':
+    case "queen":
       // Combine rook and bishop moves
-      const rookMoves = getPieceMovements({ ...piece, type: 'rook' }, from);
-      const bishopMoves = getPieceMovements({ ...piece, type: 'bishop' }, from);
+      const rookMoves = getPieceMovements({ ...piece, type: "rook" }, from);
+      const bishopMoves = getPieceMovements({ ...piece, type: "bishop" }, from);
       moves.push(...rookMoves, ...bishopMoves);
       break;
 
-    case 'king':
+    case "king":
       // One square in any direction
       for (let dx = -1; dx <= 1; dx++) {
         for (let dy = -1; dy <= 1; dy++) {
@@ -85,10 +92,10 @@ export const getPieceMovements = (piece: GamePiece, from: BoardPosition): BoardP
 export const canCapture = (
   piece: GamePiece,
   from: BoardPosition,
-  to: BoardPosition
+  to: BoardPosition,
 ): boolean => {
   return getPieceMovements(piece, from).some(
-    move => move.x === to.x && move.y === to.y
+    (move) => move.x === to.x && move.y === to.y,
   );
 };
 
@@ -96,7 +103,7 @@ export const canCapture = (
 export const validateCaptureChain = (
   pieces: Map<string, GamePiece>,
   positions: BoardPosition[],
-  blackKingPosition: BoardPosition
+  blackKingPosition: BoardPosition,
 ): boolean => {
   if (positions.length < 2) return false;
 
@@ -110,9 +117,16 @@ export const validateCaptureChain = (
     if (!currentPiece) return false;
 
     const nextKey = `${nextPos.x},${nextPos.y}`;
-    const nextPiece = i === positions.length - 1 
-      ? { id: 'black-king', type: 'king', color: 'black', points: 0, multiplier: 1 }
-      : pieces.get(nextKey);
+    const nextPiece =
+      i === positions.length - 1
+        ? {
+            id: "black-king",
+            type: "king",
+            color: "black",
+            points: 0,
+            multiplier: 1,
+          }
+        : pieces.get(nextKey);
 
     if (!nextPiece) return false;
 
@@ -130,9 +144,52 @@ export const validateCaptureChain = (
 };
 
 export const AVAILABLE_PIECES: GamePiece[] = [
-  { id: 'rook-blue', type: 'rook', color: 'blue', points: 50, multiplier: 1.2 },
-  { id: 'bishop-green', type: 'bishop', color: 'green', points: 30, multiplier: 1.5 },
-  { id: 'knight-purple', type: 'knight', color: 'purple', points: 40, multiplier: 1.3 },
-  { id: 'queen-red', type: 'queen', color: 'red', points: 90, multiplier: 2.0 },
+  { id: "rook-blue", type: "rook", color: "blue", points: 50, multiplier: 1.2 },
+  {
+    id: "bishop-green",
+    type: "bishop",
+    color: "green",
+    points: 30,
+    multiplier: 1.5,
+  },
+  {
+    id: "knight-purple",
+    type: "knight",
+    color: "purple",
+    points: 40,
+    multiplier: 1.3,
+  },
+  { id: "queen-red", type: "queen", color: "red", points: 90, multiplier: 2.0 },
 ];
 
+export const calculateChainScore = (
+  pieces: Map<string, GamePiece>,
+  chain: BoardPosition[],
+): { points: number; multiplierText: string } => {
+  let totalPoints = 0;
+  let currentMultiplier = 1;
+  let multiplierText = "";
+
+  chain.forEach((pos, index) => {
+    const key = `${pos.x},${pos.y}`;
+    const piece = pieces.get(key);
+
+    if (piece) {
+      // Calculate points from this piece
+      const piecePoints = piece.points * currentMultiplier;
+      totalPoints += piecePoints;
+
+      // Update multiplier for next piece
+      currentMultiplier *= piece.multiplier;
+
+      // Build multiplier text to display
+      if (index < chain.length - 1) {
+        multiplierText += `${piece.multiplier}x `;
+      } else {
+        multiplierText += `${piece.multiplier}`;
+      }
+    }
+  });
+
+  return { points: Math.round(totalPoints), multiplierText };
+};

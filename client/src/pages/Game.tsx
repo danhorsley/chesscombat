@@ -26,17 +26,19 @@ export default function Game() {
   const handlePieceDrop = useCallback((piece: GamePiece, position: BoardPosition) => {
     const key = `${position.x},${position.y}`;
 
-    // Check if this is the first piece and it's not on the starting square
-    if (pieces.size === 0 && (position.x !== startingSquare.x || position.y !== startingSquare.y)) {
-      toast({
-        title: "Invalid Move",
-        description: "First piece must be placed on the red square",
-        variant: "destructive"
-      });
-      return;
+    // If no pieces are on the board, first piece must go on starting square
+    if (pieces.size === 0) {
+      if (position.x !== startingSquare.x || position.y !== startingSquare.y) {
+        toast({
+          title: "Invalid Move",
+          description: "First piece must be placed on the red square",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
-    // Allow overwriting existing pieces (adjustment)
+    // For all pieces (including first), set the piece in the new position
     setPieces(prev => {
       const next = new Map(prev);
       next.set(key, { ...piece, id: key });

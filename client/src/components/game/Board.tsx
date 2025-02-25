@@ -30,8 +30,7 @@ export function Board({
 
   const renderSquare = (position: BoardPosition) => {
     const key = `${position.x},${position.y}`;
-    const piece = Array.from(pieces.entries())
-      .find(([_, p]) => p.id === key)?.[1];
+    const piece = pieces.get(key);
 
     const isValidMove = validMoves.some(move => 
       move.x === position.x && move.y === position.y
@@ -65,14 +64,15 @@ export function Board({
         ref={drop}
         onClick={() => onSquareClick(position)}
         className={cn(
-          "w-16 h-16 border border-gray-300 relative",
+          "w-16 h-16 relative",
           (position.x + position.y) % 2 === 0 ? "bg-white" : "bg-gray-100",
           isOver && "bg-blue-100",
           isValidMove && "bg-green-100",
           isMissing && "bg-gray-900",
-          isStarting && "ring-2 ring-red-500",
-          chainIndex !== -1 && "ring-2 ring-green-500",
-          "flex items-center justify-center"
+          "flex items-center justify-center",
+          "border border-gray-300",
+          isStarting && "outline outline-2 outline-offset-[-2px] outline-red-500",
+          chainIndex !== -1 && "outline outline-2 outline-offset-[-2px] outline-green-500"
         )}
       >
         {isBlackKing && (

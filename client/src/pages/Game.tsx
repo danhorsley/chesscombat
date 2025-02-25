@@ -72,10 +72,18 @@ export default function Game() {
       });
     }
 
-    // Reset chain when adding/moving pieces
-    setCaptureChain([]);
-    setCombo(0);
-  }, [pieces, startingSquare, blackKingPosition, missingSquare, toast]);
+    // After placing a piece, update the capture chain
+    if (pieces.size === 0) {
+      setCaptureChain([position]);
+      setCombo(1);
+    } else {
+      const newChain = [...captureChain, position];
+      if (validateCaptureChain(pieces, newChain, blackKingPosition)) {
+        setCaptureChain(newChain);
+        setCombo(newChain.length);
+      }
+    }
+  }, [pieces, startingSquare, blackKingPosition, missingSquare, toast, captureChain]);
 
   const handleSquareClick = useCallback((position: BoardPosition) => {
     const key = `${position.x},${position.y}`;
@@ -86,6 +94,7 @@ export default function Game() {
       if (captureChain.length === 0 || 
           (position.x === startingSquare.x && position.y === startingSquare.y)) {
         setCaptureChain([position]);
+        setCombo(1);
       } else {
         const newChain = [...captureChain, position];
         if (validateCaptureChain(pieces, newChain, blackKingPosition)) {

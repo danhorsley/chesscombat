@@ -74,11 +74,13 @@ export function Board({
       collect: monitor => ({
         isOver: monitor.isOver(),
       }),
-    }), [pieces.size, isMissing, isBlackKing, isStarting, captureChain]);
+    }), [pieces, isMissing, isBlackKing, isStarting, captureChain]);
 
     // Determine if this square is a valid drop target for the current drag
     let isValidDropTarget = false;
-    if (captureChain.length > 0) {
+    if (pieces.size === 0) {
+      isValidDropTarget = isStarting;
+    } else if (captureChain.length > 0) {
       const lastPos = captureChain[captureChain.length - 1];
       const lastPiece = pieces.get(`${lastPos.x},${lastPos.y}`);
       if (lastPiece) {
@@ -102,7 +104,7 @@ export function Board({
           "border border-gray-300",
           isStarting && "outline outline-2 outline-offset-[-2px] outline-red-500",
           chainIndex !== -1 && "outline outline-2 outline-offset-[-2px] outline-green-500",
-          captureChain.length > 0 && isValidDropTarget && "bg-yellow-100"
+          isValidDropTarget && "bg-yellow-100"
         )}
       >
         {isBlackKing && (

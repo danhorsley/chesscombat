@@ -67,8 +67,7 @@ export function Board({
           }
         }
 
-        // Otherwise can drop anywhere valid
-        return true;
+        return false;
       },
       drop: (item: GamePiece) => onPieceDrop(item, position),
       collect: monitor => ({
@@ -76,14 +75,14 @@ export function Board({
       }),
     }), [pieces, isMissing, isBlackKing, isStarting, captureChain]);
 
-    // Determine if this square is a valid drop target for the current drag
+    // Determine if this square is a valid drop target
     let isValidDropTarget = false;
     if (pieces.size === 0) {
       isValidDropTarget = isStarting;
     } else if (captureChain.length > 0) {
       const lastPos = captureChain[captureChain.length - 1];
       const lastPiece = pieces.get(`${lastPos.x},${lastPos.y}`);
-      if (lastPiece) {
+      if (lastPiece && !piece) { // Only highlight empty squares
         isValidDropTarget = canCapture(lastPiece, lastPos, position);
       }
     }

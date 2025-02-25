@@ -3,7 +3,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Board } from '@/components/game/Board';
 import { Sidebar } from '@/components/game/Sidebar';
-import { GamePiece, BoardPosition, BOARD_SIZE, validateCaptureChain } from '@/lib/game-logic';
+import { GamePiece, BoardPosition, BOARD_SIZE, validateCaptureChain, canCapture } from '@/lib/game-logic'; // Added canCapture import
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 
@@ -42,6 +42,13 @@ export default function Game() {
         });
         return;
       }
+    } else {
+      // For subsequent pieces, verify they can be captured by the last piece in the chain
+      const lastPos = captureChain[captureChain.length - 1];
+      const lastPiece = pieces.get(`${lastPos.x},${lastPos.y}`);
+      if (!lastPiece || !canCapture(lastPiece, lastPos, position)) {
+        return;
+      }
     }
 
     // Check if this piece is already on the board
@@ -78,10 +85,8 @@ export default function Game() {
       setCombo(1);
     } else {
       const newChain = [...captureChain, position];
-      if (validateCaptureChain(pieces, newChain, blackKingPosition)) {
-        setCaptureChain(newChain);
-        setCombo(newChain.length);
-      }
+      setCaptureChain(newChain);
+      setCombo(newChain.length);
     }
   }, [pieces, startingSquare, blackKingPosition, missingSquare, toast, captureChain]);
 
@@ -91,7 +96,7 @@ export default function Game() {
 
     if (piece) {
       // Add to capture chain if it's valid
-      if (captureChain.length === 0 || 
+      if (captureChain.length === 0 ||
           (position.x === startingSquare.x && position.y === startingSquare.y)) {
         setCaptureChain([position]);
         setCombo(1);
@@ -173,7 +178,7 @@ export default function Game() {
                 captureChain={captureChain}
               />
 
-              <Button 
+              <Button
                 className="w-full"
                 size="lg"
                 onClick={handleCompleteRound}

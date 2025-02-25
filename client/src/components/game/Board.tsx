@@ -49,6 +49,20 @@ export function Board({
       pos => pos.x === position.x && pos.y === position.y
     );
 
+    // Determine valid drop targets based on game state
+    let isValidDropTarget = false;
+    if (pieces.size === 0) {
+      // First piece can only go on starting square
+      isValidDropTarget = isStarting;
+    } else if (captureChain.length > 0) {
+      // Subsequent pieces must be placeable by the last piece in the chain
+      const lastPos = captureChain[captureChain.length - 1];
+      const lastPiece = pieces.get(`${lastPos.x},${lastPos.y}`);
+      if (lastPiece && !piece && !isBlackKing && !isMissing) {
+        isValidDropTarget = canCapture(lastPiece, lastPos, position);
+      }
+    }
+
     const [{ isOver }, drop] = useDrop(() => ({
       accept: 'PIECE',
       canDrop: () => {
@@ -58,11 +72,11 @@ export function Board({
         // If no pieces on board, can only drop on starting square
         if (pieces.size === 0) return isStarting;
 
-        // If there's a capture chain, only allow drops where the last piece can capture
+        // Subsequent pieces must be placeable by the last piece in the chain
         if (captureChain.length > 0) {
           const lastPos = captureChain[captureChain.length - 1];
           const lastPiece = pieces.get(`${lastPos.x},${lastPos.y}`);
-          if (lastPiece) {
+          if (lastPiece && !piece) {
             return canCapture(lastPiece, lastPos, position);
           }
         }
@@ -74,18 +88,6 @@ export function Board({
         isOver: monitor.isOver(),
       }),
     }), [pieces, isMissing, isBlackKing, isStarting, captureChain]);
-
-    // Determine if this square is a valid drop target
-    let isValidDropTarget = false;
-    if (pieces.size === 0) {
-      isValidDropTarget = isStarting;
-    } else if (captureChain.length > 0) {
-      const lastPos = captureChain[captureChain.length - 1];
-      const lastPiece = pieces.get(`${lastPos.x},${lastPos.y}`);
-      if (lastPiece && !piece) { // Only highlight empty squares
-        isValidDropTarget = canCapture(lastPiece, lastPos, position);
-      }
-    }
 
     return (
       <div

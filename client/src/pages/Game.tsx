@@ -12,6 +12,7 @@ import {
 import { generateBoard } from "@/lib/board-generator";
 import { selectPieces } from "@/lib/piece-selector-service";
 import { LevelSelector } from "@/components/game/LevelSelector";
+import { saveBoardWithPieces } from "@/lib/board-save";
 
 export function Game() {
   // Game difficulty state

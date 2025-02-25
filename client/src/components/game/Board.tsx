@@ -1,12 +1,18 @@
-import { useDrop } from 'react-dnd';
+import { useDrop } from "react-dnd";
 import { cn } from "@/lib/utils";
-import { Piece } from './Piece';
-import { BOARD_SIZE, type GamePiece, type BoardPosition, getPieceMovements, canCapture } from '@/lib/game-logic';
+import { Piece } from "./Piece";
+import {
+  BOARD_SIZE,
+  type GamePiece,
+  type BoardPosition,
+  getPieceMovements,
+  canCapture,
+} from "@/lib/game-logic";
 
 interface BoardProps {
   pieces: Map<string, GamePiece>;
   blackKingPosition: BoardPosition;
-  missingSquare: BoardPosition;
+  missingSquares: BoardPosition[];
   startingSquare: BoardPosition;
   onPieceDrop: (piece: GamePiece, position: BoardPosition) => void;
   selectedPiece?: { piece: GamePiece; position: BoardPosition };
@@ -17,14 +23,14 @@ interface BoardProps {
 export function Board({
   pieces,
   blackKingPosition,
-  missingSquare,
+  missingSquares,
   startingSquare,
   onPieceDrop,
   selectedPiece,
   onSquareClick,
   captureChain,
 }: BoardProps) {
-  const validMoves = selectedPiece 
+  const validMoves = selectedPiece
     ? getPieceMovements(selectedPiece.piece, selectedPiece.position)
     : [];
 
@@ -32,21 +38,22 @@ export function Board({
     const key = `${position.x},${position.y}`;
     const piece = pieces.get(key);
 
-    const isValidMove = validMoves.some(move => 
-      move.x === position.x && move.y === position.y
+    const isValidMove = validMoves.some(
+      (move) => move.x === position.x && move.y === position.y,
     );
 
-    const isBlackKing = position.x === blackKingPosition.x && 
-      position.y === blackKingPosition.y;
+    const isBlackKing =
+      position.x === blackKingPosition.x && position.y === blackKingPosition.y;
 
-    const isMissing = position.x === missingSquare.x && 
-      position.y === missingSquare.y;
+    const isMissing = missingSquares.some(
+      (square) => square.x === position.x && square.y === position.y,
+    );
 
-    const isStarting = position.x === startingSquare.x && 
-      position.y === startingSquare.y;
+    const isStarting =
+      position.x === startingSquare.x && position.y === startingSquare.y;
 
     const chainIndex = captureChain.findIndex(
-      pos => pos.x === position.x && pos.y === position.y
+      (pos) => pos.x === position.x && pos.y === position.y,
     );
 
     // Determine valid drop targets based on game state
@@ -63,31 +70,34 @@ export function Board({
       }
     }
 
-    const [{ isOver }, drop] = useDrop(() => ({
-      accept: 'PIECE',
-      canDrop: () => {
-        // Can't drop on missing square or black king
-        if (isMissing || isBlackKing) return false;
+    const [{ isOver }, drop] = useDrop(
+      () => ({
+        accept: "PIECE",
+        canDrop: () => {
+          // Can't drop on missing square or black king
+          if (isMissing || isBlackKing) return false;
 
-        // If no pieces on board, can only drop on starting square
-        if (pieces.size === 0) return isStarting;
+          // If no pieces on board, can only drop on starting square
+          if (pieces.size === 0) return isStarting;
 
-        // Subsequent pieces must be placeable by the last piece in the chain
-        if (captureChain.length > 0) {
-          const lastPos = captureChain[captureChain.length - 1];
-          const lastPiece = pieces.get(`${lastPos.x},${lastPos.y}`);
-          if (lastPiece && !piece) {
-            return canCapture(lastPiece, lastPos, position);
+          // Subsequent pieces must be placeable by the last piece in the chain
+          if (captureChain.length > 0) {
+            const lastPos = captureChain[captureChain.length - 1];
+            const lastPiece = pieces.get(`${lastPos.x},${lastPos.y}`);
+            if (lastPiece && !piece) {
+              return canCapture(lastPiece, lastPos, position);
+            }
           }
-        }
 
-        return false;
-      },
-      drop: (item: GamePiece) => onPieceDrop(item, position),
-      collect: monitor => ({
-        isOver: monitor.isOver(),
+          return false;
+        },
+        drop: (item: GamePiece) => onPieceDrop(item, position),
+        collect: (monitor) => ({
+          isOver: monitor.isOver(),
+        }),
       }),
-    }), [pieces, isMissing, isBlackKing, isStarting, captureChain]);
+      [pieces, isMissing, isBlackKing, isStarting, captureChain],
+    );
 
     return (
       <div
@@ -103,27 +113,27 @@ export function Board({
           isMissing && "bg-gray-900",
           "flex items-center justify-center",
           "border border-gray-300",
-          isStarting && "outline outline-2 outline-offset-[-2px] outline-red-500",
-          chainIndex !== -1 && "outline outline-2 outline-offset-[-2px] outline-green-500",
-          isValidDropTarget && "bg-yellow-100"
+          isStarting &&
+            "outline outline-2 outline-offset-[-2px] outline-red-500",
+          chainIndex !== -1 &&
+            "outline outline-2 outline-offset-[-2px] outline-green-500",
+          isValidDropTarget && "bg-yellow-100",
         )}
       >
         {isBlackKing && (
-          <Piece 
-            piece={{ 
-              id: 'black-king', 
-              type: 'king', 
-              color: 'black',
+          <Piece
+            piece={{
+              id: "black-king",
+              type: "king",
+              color: "black",
               points: 0,
-              multiplier: 1
+              multiplier: 1,
             }}
             draggable={false}
           />
         )}
         {piece && (
-          <div className={cn(
-            chainIndex !== -1 && "relative"
-          )}>
+          <div className={cn(chainIndex !== -1 && "relative")}>
             <Piece piece={piece} draggable={true} />
             {chainIndex !== -1 && (
               <div className="absolute -top-3 -right-3 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
@@ -140,7 +150,7 @@ export function Board({
     <div className="inline-grid grid-cols-5 gap-0 border-2 border-gray-400 rounded-lg p-2 bg-white shadow-lg">
       {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, i) => ({
         x: Math.floor(i / BOARD_SIZE),
-        y: i % BOARD_SIZE
+        y: i % BOARD_SIZE,
       })).map(renderSquare)}
     </div>
   );
